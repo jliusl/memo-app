@@ -1,7 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const FRONTEND_PORT = 4173;
-const BACKEND_PORT = 8000;
+
+/*
+ * Deliberately not 8000, which is where the development backend listens. Two servers that
+ * answer /api/health identically are indistinguishable to the readiness probe below, so
+ * `reuseExistingServer` would adopt a dev server as though it were the test one - and a dev
+ * server has no POST /api/__test__/reset, so every test that resets would fail with an
+ * assertion about `true` and nothing about ports. The frontend has kept its dev and test
+ * ports apart (5173 and 4173) all along; this does the same for the backend.
+ */
+const BACKEND_PORT = 8100;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -65,7 +74,7 @@ export default defineConfig({
       // imported (uvicorn builds the loop first, so an in-app fix would be too late).
       // It is a no-op on Linux, where that is already the default. See src/backend/app/loop.py.
       command:
-        'uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --loop app.loop:selector_event_loop',
+        `uv run uvicorn app.main:app --host 127.0.0.1 --port ${BACKEND_PORT} --loop app.loop:selector_event_loop`,
       cwd: 'src/backend',
       env: { ENV: 'test' },
       url: `http://127.0.0.1:${BACKEND_PORT}/api/health`,
@@ -77,8 +86,12 @@ export default defineConfig({
     {
       // Built, not dev-served: a stale dist would be a false pass, so the build is part of
       // starting the server rather than a step someone has to remember.
+      // API_TARGET moves this server's /api proxy onto the test backend. Without it the
+      // proxy keeps its default of 8000 and quietly forwards the whole suite to whatever
+      // dev server happens to be listening there - the same mistake, made one layer down.
       command: `npm run build && npm run preview -- --port ${FRONTEND_PORT} --strictPort`,
       cwd: 'src/frontend',
+      env: { API_TARGET: `http://127.0.0.1:${BACKEND_PORT}` },
       url: `http://localhost:${FRONTEND_PORT}`,
       reuseExistingServer: !process.env.CI,
       stdout: 'pipe',

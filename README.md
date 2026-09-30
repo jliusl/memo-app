@@ -116,6 +116,13 @@ npx playwright test                    # all three browsers
 npx playwright test --project=chromium # just one
 ```
 
+It runs on its own ports — 4173 for the app and 8100 for the API — so it can be run while the
+dev servers are up, and `npm run dev` on 5173 can stay running beside it. That separation is
+load-bearing rather than cosmetic: the two backends answer `/api/health` identically, so on a
+shared port Playwright's readiness check cannot tell a dev server from the test one, adopts
+whichever is already listening, and every test fails on the reset route the dev server does not
+have. See the comment on `BACKEND_PORT` in [playwright.config.ts](playwright.config.ts).
+
 The suite resets the database before each test through `POST /api/__test__/reset`, a route that
 only exists while `ENV=test`. `src/backend/tests/test_support_routes.py` asserts that the route
 is absent otherwise, so it cannot quietly ship.
