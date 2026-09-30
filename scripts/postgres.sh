@@ -2,14 +2,17 @@
 #
 # Run a local PostgreSQL 17 from the official Windows binaries, with nothing installed
 # system-wide: no installer, no Windows service, no administrator rights. Everything -
-# binaries and data - lives under POSTGRES_HOME, which defaults to D:/pgsql because that is
-# the drive with room on this machine (C: is nearly full, which is why Docker Desktop's
-# installer failed here in the first place).
+# binaries and data - lives under POSTGRES_HOME, which defaults to D:/pgsql, the drive with
+# room on this machine.
 #
-# This is the *local* database. CI uses a postgres:17 service container instead, and
-# docker-compose.yml is still there for anyone whose machine can run Docker. All three
-# agree on the same credentials and the same two database names, so the application does
-# not know or care which one it is talking to.
+# This is the route that needs no Docker at all. It is no longer what this machine uses day
+# to day - docker compose up -d postgres is - and the two cannot run at the same time,
+# because the container publishes 5432 and restarts with the machine. `stop` the container
+# (or this) before starting the other.
+#
+# CI uses a postgres:17 service container. All three routes agree on the same credentials and
+# the same two database names, so the application does not know or care which one it is
+# talking to.
 #
 #   ./scripts/postgres.sh init     create the cluster, the role, and both databases
 #   ./scripts/postgres.sh start    start the server in the background

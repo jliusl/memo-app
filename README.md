@@ -31,8 +31,19 @@ All three routes create the same two databases, `memo_dev` and `memo_test`, with
 credentials, so nothing downstream knows which one you picked. `memo_test` is defined once, in
 `docker/initdb/01-create-test-db.sql`, and every route reads it from there.
 
-**Local binaries** (no installer, no service, no administrator rights — this is what the
-development machine here uses, with the binaries in `D:/pgsql`):
+**Docker** — what the development machine here uses:
+
+```bash
+docker compose up -d postgres
+```
+
+The container publishes 5432 and `restart: unless-stopped`, so once it is up it takes that port
+on every boot and keeps it. That is the intended state, but it means the other two routes
+cannot run alongside it: stop the container first (`docker compose stop postgres`) if you ever
+want to go back to the local binaries.
+
+**Local binaries** (no Docker, no installer, no service, no administrator rights — the binaries
+live in `D:/pgsql`, on the drive with room):
 
 ```bash
 ./scripts/postgres.sh init     # once: create the cluster, the role, both databases
@@ -57,12 +68,6 @@ Two traps make the shorter spellings fail on a typical Windows machine:
 - `./scripts/postgres.sh` starts a **separate Git Bash window**, because `.sh` is associated
   with `git-bash.exe`. The output goes to that window and the command returns at once, so the
   terminal you typed in shows nothing.
-
-**Docker**:
-
-```bash
-docker compose up -d postgres
-```
 
 **CI** uses a `postgres:17` service container — see [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
@@ -126,3 +131,11 @@ is absent otherwise, so it cannot quietly ship.
   script is calling `asyncio.run` without first calling `use_selector_event_loop()`.
 - **`no PostgreSQL at D:/pgsql` from WSL.** The script is being run from the wrong shell — see
   the database section above. PostgreSQL is probably fine; WSL cannot reach these binaries.
+- **`docker: command not found` in a terminal that was already open.** Docker Desktop installs
+  its CLI into the *machine* PATH (`D:\Docker\Docker\resources\bin` here), and an already-running
+  shell keeps the PATH it started with. Open a new terminal.
+- **`C:\Program Files\Docker` looks like leftovers from the failed install on C:.** It is not.
+  That directory is where the CLI finds its plugins, so `docker compose` and `docker buildx` run
+  from `C:\Program Files\Docker\cli-plugins\*.exe` — not from the copies beside the app on `D:`.
+  Check with `docker info --format '{{range .ClientInfo.Plugins}}{{.Name}} -> {{.Path}}{{"\n"}}{{end}}'`
+  before deleting anything there; removing it breaks compose.
