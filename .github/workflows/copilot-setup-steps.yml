@@ -23,12 +23,29 @@ jobs:
       with:
         node-version: lts/*
 
-    - name: Install dependencies
+    - name: Install the browser-test dependencies
       run: npm ci
 
-    - name: Install Playwright Browsers
+    - name: Install the browsers
       run: npx playwright install --with-deps
 
-    # Customize this step as needed
-    - name: Build application
-      run: npx run build
+    - name: Install the frontend dependencies
+      working-directory: src/frontend
+      run: npm ci
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+    # The backend, and Postgres. Neither is started here - CI does that - but an agent
+    # picking up this workspace can then run the tests without installing anything first.
+    - name: Install the backend dependencies
+      working-directory: src/backend
+      run: uv sync --frozen
+
+    # Was `npx run build`, which is not a command. This is the build the browser tests
+    # depend on, so it is also the one worth failing early on.
+    - name: Build the frontend
+      working-directory: src/frontend
+      run: npm run build
