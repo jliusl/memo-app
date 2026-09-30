@@ -18,7 +18,9 @@ class Settings(BaseSettings):
     )
 
     env: Literal["dev", "test", "prod"] = "dev"
-    secret_key: str = "dev-only-not-a-real-secret"
+    # At least 32 bytes, or PyJWT warns about the key on every token it signs (RFC 7518 3.2).
+    # This default is what CI uses, because a fresh checkout has no .env to override it.
+    secret_key: str = "dev-only-placeholder-not-a-real-secret-value"
     access_token_expire_minutes: int = 60
     # Lowered by the test suite: at 12 rounds every seeded account costs ~300ms.
     bcrypt_rounds: int = 12
