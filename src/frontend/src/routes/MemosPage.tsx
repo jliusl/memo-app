@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { logOut } from '../api/auth'
 import { createMemo, listMemos } from '../api/memos'
@@ -10,6 +11,7 @@ import { MemoItem } from '../components/MemoItem'
 export function MemosPage() {
   const session = useSession()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [query, setQuery] = useState('')
 
   // The search text is part of the key, so results for one query can never be shown under
@@ -27,6 +29,11 @@ export function MemosPage() {
       // Dropping every cached query is what makes signing out complete: no memo from the
       // previous session can be rendered again, not even for a frame.
       queryClient.clear()
+      // And leave the page explicitly. Clearing the cache is not a notification: it used to
+      // be left to RequireAuth noticing that the session query had failed, which worked
+      // only while its observer happened to hear about it. When it did not, the user stayed
+      // on the memo list with a 401 rendered in place of their Memos.
+      navigate('/sign-in', { replace: true })
     },
   })
 

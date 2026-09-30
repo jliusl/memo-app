@@ -109,6 +109,21 @@ test('search narrows the list to what matches', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 2 })).toHaveCount(1);
 });
 
+test('signing out leaves the memo list for the sign-in page', async ({ page }) => {
+  await addMemo(page, 'Groceries');
+
+  await page.getByRole('button', { name: 'Sign out' }).click();
+
+  await expect(page).toHaveURL('/sign-in');
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  // Not merely off-screen: the signed-out page must not still be reachable, or the next
+  // person at this browser could go back to somebody else's Memos.
+  await expect(page.getByRole('form', { name: 'New memo' })).toHaveCount(0);
+
+  await page.goto('/');
+  await expect(page).toHaveURL('/sign-in');
+});
+
 test('deleting a memo removes it for good', async ({ page }) => {
   await addMemo(page, 'Groceries');
 
