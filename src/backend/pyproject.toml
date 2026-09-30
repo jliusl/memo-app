@@ -1,0 +1,44 @@
+[project]
+name = "memo-backend"
+version = "0.1.0"
+description = "Memo app API. See CONTEXT.md and docs/adr/0001 - this app is the System Under Test."
+requires-python = ">=3.13"
+dependencies = [
+    "anyio>=4.6",
+    "alembic>=1.14",
+    "bcrypt>=4.2",
+    "email-validator>=2.2",
+    "fastapi>=0.115",
+    "psycopg[binary,pool]>=3.2",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+    "pyjwt>=2.10",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "uvicorn[standard]>=0.34",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "ruff>=0.9",
+]
+
+# The app is deployed as source, not published as a package.
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
