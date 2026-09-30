@@ -1,0 +1,7 @@
+# Development happens on Windows, CI runs on Linux. Pin line endings so a
+# CRLF working copy can never leak into the repository.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
