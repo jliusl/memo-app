@@ -1,14 +1,25 @@
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, MetaData, String, Text
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from .clock import utcnow
 
+# Without a naming convention, constraint names are database-assigned and Alembic
+# autogenerate reports phantom differences every time it runs. The names produced here
+# are the ones spelled out in alembic/versions/0001_initial_schema.py.
+NAMING_CONVENTION = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
 
 class Base(DeclarativeBase):
-    pass
+    metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
 def normalize_title(title: str | None) -> str | None:
@@ -29,7 +40,7 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     # Stored lowercased; email comparison is case-insensitive in practice, and a
     # case-sensitive unique index would let Alice@x.com and alice@x.com coexist.
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
@@ -50,14 +61,15 @@ class Memo(Base):
         # a bad write from any path - including the test reset route - cannot land.
         CheckConstraint(
             "title IS NOT NULL OR btrim(body) <> ''",
-            name="ck_memos_title_or_body",
+            # Expands to ck_memos_title_or_body via NAMING_CONVENTION.
+            name="title_or_body",
         ),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True)
     title: Mapped[str | None] = mapped_column(String(200))
-    body: Mapped[str] = mapped_column(Text, server_default="")
+    body: Mapped[str] = mapped_column(Text, default="")
 
     # NULL means not pinned. A timestamp rather than a boolean, so that when several
     # Memos are pinned the most recently pinned one sorts first.
