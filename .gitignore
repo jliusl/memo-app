@@ -1,5 +1,7 @@
 # Node
 node_modules/
+dist/
+.playwright-mcp/
 playwright-report/
 test-results/
 blob-report/
