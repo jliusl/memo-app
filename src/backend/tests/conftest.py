@@ -9,7 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from alembic import command
 from app.config import Settings
 from app.db import create_engine, create_sessionmaker
+from app.loop import use_selector_event_loop
 from app.main import create_app
+
+# Import time, before pytest-asyncio builds any loop, or psycopg cannot connect on Windows.
+# See app/loop.py.
+use_selector_event_loop()
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 

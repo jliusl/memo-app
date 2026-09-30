@@ -61,7 +61,11 @@ export default defineConfig({
       // way to get a known starting state, which is the point of that route - see
       // docs/adr/0001. An environment variable beats the .env file in pydantic-settings,
       // so this wins even though .env says ENV=dev.
-      command: 'uv run uvicorn app.main:app --host 127.0.0.1 --port 8000',
+      // --loop names a selector event loop, which Windows needs before the app is even
+      // imported (uvicorn builds the loop first, so an in-app fix would be too late).
+      // It is a no-op on Linux, where that is already the default. See src/backend/app/loop.py.
+      command:
+        'uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --loop app.loop:selector_event_loop',
       cwd: 'src/backend',
       env: { ENV: 'test' },
       url: `http://127.0.0.1:${BACKEND_PORT}/api/health`,

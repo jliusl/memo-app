@@ -7,7 +7,11 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 from app.config import Settings
+from app.loop import use_selector_event_loop
 from app.models import Base
+
+# Before asyncio.run below creates the loop, or psycopg cannot connect. See app/loop.py.
+use_selector_event_loop()
 
 config = context.config
 
