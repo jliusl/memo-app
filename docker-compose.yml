@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: memo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: memo
+      POSTGRES_PASSWORD: memo
+      POSTGRES_DB: memo_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - memo-pgdata:/var/lib/postgresql/data
+      # Creates memo_test alongside memo_dev on first boot.
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memo -d memo_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  memo-pgdata:
