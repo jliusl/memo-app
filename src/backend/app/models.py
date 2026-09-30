@@ -76,7 +76,12 @@ class Memo(Base):
     pinned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    # Deliberately no `onupdate`: this is "when the content was last written", and the
+    # router sets it only when the title or body actually changed. With `onupdate`, any
+    # UPDATE of the row would move the Memo in the recency order - so pinning a Memo and
+    # then unpinning it would teleport it to the top of the list without an edit.
+    # See docs/adr/0002-an-edit-is-a-content-change.md.
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     owner: Mapped[User] = relationship(back_populates="memos")
 

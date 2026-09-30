@@ -84,19 +84,26 @@ async def update_memo(memo_id: int, payload: MemoUpdate, user: CurrentUser, sess
     data = payload.model_dump(exclude_unset=True)
 
     if "body" in data and data["body"] is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "body cannot be null")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "body cannot be null")
 
     # `exclude_unset` left out the fields the caller did not send, so a plain default
     # means "keep what is stored"; an explicit null arrives as None and was handled above.
-    title = data.get("title", memo.title)
+    title = normalize_title(data.get("title", memo.title))
     body = data.get("body", memo.body)
 
     # Validated against the values that are about to be written, and before anything is
     # assigned, so that a rejected PATCH leaves the session untouched.
     if not has_content(title, body):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "a memo needs a title or a body")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "a memo needs a title or a body")
 
-    memo.title = normalize_title(title)
+    # Compared, not just assigned: a caller may send a field unchanged, and a PATCH that
+    # changes nothing is not an edit. Only real content changes move the Memo in the
+    # recency order - pinning is how a Memo is organised, not something written into it.
+    # See docs/adr/0002-an-edit-is-a-content-change.md.
+    if title != memo.title or body != memo.body:
+        memo.updated_at = utcnow()
+
+    memo.title = title
     memo.body = body
 
     if data.get("pinned") is not None:

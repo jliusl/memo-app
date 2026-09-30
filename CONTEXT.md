@@ -17,8 +17,12 @@ The single User a Memo belongs to. Ownership never transfers, and a Memo never h
 _Avoid_: Author, creator, parent
 
 **Pin** (置顶):
-A marker on a Memo that raises it above every unpinned Memo in a listing. Only the owner can pin or unpin a Memo, and any number of a User's Memos can be pinned at once.
+A marker on a Memo that raises it above every unpinned Memo in a listing. Only the owner can pin or unpin a Memo, and any number of a User's Memos can be pinned at once. Pinning organises a Memo; it is not an Edit, so pinning and unpinning leave a Memo exactly where it sat in the recency order.
 _Avoid_: Favorite, star, bookmark, flag, sticky
+
+**Edit**:
+A change to a Memo's title or body, and the only thing that counts as writing to it. A listing shows the most recently edited Memos first, so that the thing just worked on is the thing nearest to hand.
+_Avoid_: Update, modify, change, touch
 
 **Delete**:
 Permanent removal of a Memo by its owner. A deleted Memo is gone and cannot be recovered from within the application.

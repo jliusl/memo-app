@@ -73,10 +73,10 @@ async def test_pinned_memos_are_ordered_by_most_recently_pinned(
     await client.patch(f"/api/memos/{second['id']}", json={"pinned": True})
 
     # The two pins above may land in the same clock tick, so the order between them is
-    # fixed explicitly rather than left to the machine's timer resolution.
-    await session.execute(
-        update(Memo).where(Memo.id == second["id"]).values(pinned_at=datetime(2020, 6, 1, tzinfo=UTC))
-    )
+    # fixed explicitly rather than left to the machine's timer resolution. `first` is the
+    # one pushed back, leaving `second` as the more recent pin - which is the one that
+    # must lead.
+    await session.execute(update(Memo).where(Memo.id == first["id"]).values(pinned_at=datetime(2020, 6, 1, tzinfo=UTC)))
     await session.commit()
 
     listed = (await client.get("/api/memos")).json()
@@ -114,9 +114,11 @@ async def test_unpinning_returns_a_memo_to_the_ordinary_ordering(
     await client.patch(f"/api/memos/{pinned['id']}", json={"pinned": True})
     assert await _ids(client) == [pinned["id"], ordinary["id"]]
 
+    # `ordinary` was written after `pinned`, so once the Pin is gone the two are ordered
+    # purely by recency and `ordinary` leads. The pin/unpin round trip above must not have
+    # counted as an edit - if it had, `pinned` would stay at the top.
     await client.patch(f"/api/memos/{pinned['id']}", json={"pinned": False})
 
-    # `ordinary` was written after `pinned`, so it now leads on recency.
     assert await _ids(client) == [ordinary["id"], pinned["id"]]
 
 
@@ -152,6 +154,21 @@ async def test_editing_a_memo_moves_it_to_the_top(
     await client.patch(f"/api/memos/{first['id']}", json={"body": "now with more text"})
 
     assert await _ids(client) == [first["id"], second["id"]]
+
+
+async def test_pinning_is_not_an_edit(client: httpx.AsyncClient, signed_in: dict, create_memo) -> None:
+    """`updated_at` is when a Memo was last written, and a Pin writes nothing.
+
+    Asserted on the timestamp rather than on list position, because a pinned Memo leads the
+    list either way - the difference only shows up later, when it is unpinned."""
+    memo = await create_memo(title="Stable", body="")
+    before = (await client.get(f"/api/memos/{memo['id']}")).json()
+
+    await client.patch(f"/api/memos/{memo['id']}", json={"pinned": True})
+
+    after = (await client.get(f"/api/memos/{memo['id']}")).json()
+    assert after["pinned"] is True, "the Pin must have taken effect, or this proves nothing"
+    assert after["updated_at"] == before["updated_at"]
 
 
 async def test_search_matches_title_and_body(client: httpx.AsyncClient, signed_in: dict, create_memo) -> None:
