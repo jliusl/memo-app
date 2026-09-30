@@ -25,17 +25,23 @@ async def reset(request: Request, session: SessionDep, payload: ResetRequest | N
 
     emails = [spec.email for spec in payload.users]
     if len(set(emails)) != len(emails):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "duplicate email in users")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "duplicate email in users")
 
     unknown_owners = {spec.owner for spec in payload.memos} - set(emails)
     if unknown_owners:
         # Rejected up front, before the wipe, so a typo cannot leave the database empty.
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
             f"memo owner(s) not among the seeded users: {', '.join(sorted(unknown_owners))}",
         )
 
-    await session.execute(text("TRUNCATE TABLE memos, users RESTART IDENTITY CASCADE"))
+    # No `RESTART IDENTITY` on purpose, even though it would make ids start from 1 again on
+    # every reset. A JWT identifies its subject by id, so recycling ids hands a caller's
+    # still-valid cookie to whichever account is created next: a suite that asserts "the
+    # deleted account is signed out" would see a 200 instead of a 401 and pass a genuinely
+    # broken logout. Sequences are never reset outside this route, so letting them climb is
+    # also the more faithful impression of production.
+    await session.execute(text("TRUNCATE TABLE memos, users CASCADE"))
 
     users: dict[str, User] = {}
     for spec in payload.users:
