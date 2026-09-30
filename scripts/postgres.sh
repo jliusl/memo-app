@@ -37,7 +37,34 @@ die() {
   exit 1
 }
 
+# Called before anything else, because from the wrong shell the failure below would be
+# reported as a missing PostgreSQL. WSL and Linux cannot run Windows .exe binaries with
+# drive-letter paths: they would need their own PostgreSQL and their own data directory, so
+# telling them that here is more use than a path that quietly does not exist.
+require_windows_host() {
+  case "$(uname -s)" in
+    MINGW* | MSYS* | CYGWIN*) return 0 ;;
+  esac
+  cat >&2 <<'EOF'
+error: this script drives the Windows PostgreSQL binaries, so it only runs under Git Bash.
+
+  Running it from WSL or any other Linux shell fails for a reason that has nothing to do
+  with PostgreSQL being missing: /mnt/d/pgsql holds .exe files that expect Windows paths,
+  and they cannot serve a Linux data directory. Use Docker instead:
+
+      docker compose up -d postgres
+
+  Or run this script from Git Bash, which is also reachable from PowerShell:
+
+      bash scripts/postgres.sh status
+EOF
+  exit 1
+}
+
 require_binaries() {
+  # Every subcommand except `logs` goes through here, so this is the one place the wrong
+  # shell gets caught.
+  require_windows_host
   [ -x "$BIN/initdb.exe" ] || die "no PostgreSQL at $POSTGRES_HOME. Expected $BIN/initdb.exe to exist."
   [ -x "$BIN/pg_ctl.exe" ] || die "no PostgreSQL at $POSTGRES_HOME. Expected $BIN/pg_ctl.exe to exist."
 }

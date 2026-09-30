@@ -40,6 +40,11 @@ development machine here uses, with the binaries in `D:/pgsql`):
 ./scripts/postgres.sh status   # or: psql | logs | stop
 ```
 
+Run these from **Git Bash**, or from PowerShell as `bash scripts/postgres.sh status`. The
+script drives the Windows binaries with drive-letter paths, so it cannot run under WSL or any
+other Linux shell — use the Docker route there. Typing `./scripts/postgres.sh` in PowerShell
+instead opens a separate Git Bash window, where the output goes, and returns immediately.
+
 **Docker**:
 
 ```bash
@@ -106,3 +111,5 @@ is absent otherwise, so it cannot quietly ship.
   port held. Find the real owner with `netstat -ano | grep ':8000 '` and kill that PID.
 - **`Psycopg cannot use the 'ProactorEventLoop'`.** The `--loop` flag above is missing, or a
   script is calling `asyncio.run` without first calling `use_selector_event_loop()`.
+- **`no PostgreSQL at D:/pgsql` from WSL.** The script is being run from the wrong shell — see
+  the database section above. PostgreSQL is probably fine; WSL cannot reach these binaries.
