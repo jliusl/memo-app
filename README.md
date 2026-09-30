@@ -40,10 +40,23 @@ development machine here uses, with the binaries in `D:/pgsql`):
 ./scripts/postgres.sh status   # or: psql | logs | stop
 ```
 
-Run these from **Git Bash**, or from PowerShell as `bash scripts/postgres.sh status`. The
-script drives the Windows binaries with drive-letter paths, so it cannot run under WSL or any
-other Linux shell — use the Docker route there. Typing `./scripts/postgres.sh` in PowerShell
-instead opens a separate Git Bash window, where the output goes, and returns immediately.
+Run these from **Git Bash**. The script drives the Windows binaries with drive-letter paths, so
+it cannot run under WSL or any other Linux shell — use the Docker route there.
+
+From PowerShell, name Git's bash in full:
+
+```powershell
+& 'C:\Program Files\Git\bin\bash.exe' scripts/postgres.sh status
+```
+
+Two traps make the shorter spellings fail on a typical Windows machine:
+
+- `bash scripts/postgres.sh` is **not** Git Bash. Windows PATH usually resolves a bare `bash`
+  to `C:\Windows\System32\bash.exe`, which is the WSL launcher, and Git is on PATH only as
+  `C:\Program Files\Git\cmd` — a directory with `git.exe` but no `bash.exe`.
+- `./scripts/postgres.sh` starts a **separate Git Bash window**, because `.sh` is associated
+  with `git-bash.exe`. The output goes to that window and the command returns at once, so the
+  terminal you typed in shows nothing.
 
 **Docker**:
 

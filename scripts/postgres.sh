@@ -54,9 +54,10 @@ error: this script drives the Windows PostgreSQL binaries, so it only runs under
 
       docker compose up -d postgres
 
-  Or run this script from Git Bash, which is also reachable from PowerShell:
+  Or run it through Git Bash, which PowerShell can also reach - by full path, because a bare
+  `bash` on a Windows PATH is usually C:\Windows\System32\bash.exe, the WSL launcher:
 
-      bash scripts/postgres.sh status
+      & 'C:\Program Files\Git\bin\bash.exe' scripts/postgres.sh status
 EOF
   exit 1
 }
