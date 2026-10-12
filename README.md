@@ -108,6 +108,20 @@ production are the same shape.
 cd src/backend && uv run pytest
 ```
 
+That same run writes an Allure report into `allure-results/`; there is no second command to
+remember. Reading it takes the Java CLI, which wants a JRE:
+
+```bash
+allure serve allure-results    # build a report and open it, keeping nothing
+allure generate allure-results -o allure-report --clean && allure open allure-report
+```
+
+`src/backend/conftest.py` fixes the directory, because `--alluredir` resolves against the
+working directory and no single relative path is right from both `src/backend/` and the
+repository root — the one that is correct from here writes to the root of the drive from
+anywhere else. Each run clears it first, so a report never mixes two runs together. CI does
+not build this report.
+
 **Browser tests** — Playwright starts both servers itself, including building the frontend, so
 this one command is the whole recipe:
 

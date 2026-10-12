@@ -19,6 +19,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "allure-pytest>=2.16.2",
     "httpx>=0.28",
     "pytest>=8.3",
     "pytest-asyncio>=0.25",
@@ -38,7 +39,9 @@ asyncio_mode = "auto"
 # of "attached to a different loop" failures.
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
-addopts = "-q"
+# --clean-alluredir, so a report covers this run and not this run plus every earlier one.
+# The directory it empties is set in conftest.py, which is where the path can be worked out.
+addopts = "-q --clean-alluredir"
 
 [tool.ruff]
 line-length = 120
