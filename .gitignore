@@ -29,3 +29,7 @@ report.html
 # OS / editor
 .DS_Store
 Thumbs.db
+
+# Local-only, kept on disk but never pushed
+/sandbox/
+/docs/adr/0001-memo-app-is-the-system-under-test.md
